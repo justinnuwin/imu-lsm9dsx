@@ -4,7 +4,7 @@ Justin Nguyen
 
 Adapted from bruce-debruhl/scale_platoon project
 
-Adafruit LSM9DS0
+Adafruit LSM9DSx
  - Requires root to run due to system-level calls
  - Acceleration is in m s^-2
  - Velocity is in m s^-1
@@ -13,16 +13,24 @@ Adafruit LSM9DS0
 
 ## Usage 
 
-`$ sudo ./imu`
+```
+$ make library
+$ sudo make install
+```
 
-Ctrl-c to exit
+```
+$ make standalone
+$ ./imu_test        # Ctrl-c to exit
+```
+
+```
+$ make zmq_enabled
+$ ./imu_server
+```
 
 ## Dependencies
 
-- libi2c-dev
-- libzmq3-dev	# Python interface
-
-## Build instructions
-
-`$ make`
+- libi2c-dev (>=3.1 <4)
+- libzmq3-dev	# Only needed for Python interface
+- User should be added to the i2c group or commands run with sudo
 

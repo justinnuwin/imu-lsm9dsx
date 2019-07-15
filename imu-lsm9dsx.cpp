@@ -1,4 +1,8 @@
+#ifdef SERIES0
 #include "imu-lsm9ds0.h"
+#elif SERIES1
+#include "imu-lsm9ds1.h"
+#endif
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -12,6 +16,8 @@
 #include <vector>
 #include <chrono>
 
+#include "i2c.h"
+
 #ifdef ZMQ_ENABLE
 #include <zmq.hpp>
 #include <string.h>
@@ -19,82 +25,74 @@
 
 using namespace std;
 
-static int fd;
-
-void writeByte(uint8_t reg, uint8_t val) {
-    if (i2c_smbus_write_byte_data(fd, reg, val)) {
-        perror("failed to write byte");
-        exit(1);
-    }
-}
-
-void writeWord(uint8_t reg, uint16_t val) {
-    if (i2c_smbus_write_word_data(fd, reg, val)) {
-        perror("failed to write word");
-        exit(1);
-    }
-}
-
-void writeBlock(uint8_t reg, uint8_t len, uint8_t * val) {
-    if (i2c_smbus_write_block_data(fd, reg, len, val)) {
-        perror("failed to write block");
-        exit(1);
-    }
-}
-
-uint8_t readByte(uint8_t reg) {
-    return i2c_smbus_read_byte_data(fd, reg);
-}
-
-uint32_t readBlock(uint8_t reg) {
-    uint32_t res = 0;
-    uint8_t len = 0;
-
-    if ((len = i2c_smbus_read_byte_data(fd, reg))) {
-        perror("failed to read byte");
-        exit(1);
-    }
-    return res;
-}
+int fd;
 
 void setI2CMag() {
-    if (ioctl(fd, I2C_SLAVE, MAG_ADDR_AM) < 0) {
+    if (ioctl(fd, I2C_SLAVE, MAG_ADDR) < 0) {
         perror("Could not set slave address");
         exit(1);
     }
 }
 
 void setI2CAcc() {
-    if (ioctl(fd, I2C_SLAVE, ACC_ADDR_AM) < 0) {
+    if (ioctl(fd, I2C_SLAVE, ACC_ADDR) < 0) {
         perror("Could not set slave address");
         exit(1);
     }
 }
 
 void setI2CGyr() {
-    if (ioctl(fd, I2C_SLAVE, GYR_ADDR_G) < 0) {
+    if (ioctl(fd, I2C_SLAVE, GYR_ADDR) < 0) {
         perror("Could not set slave address");
         exit(1);
     }
 }
 
-void initMag(int sensitivity) {
-    setI2CMag();
-    writeByte(CTRL_REG5_AM, 0xf0);
-    writeByte(CTRL_REG6_AM, sensitivity);
-    writeByte(CTRL_REG7_AM, 0x00);
-}
+// TODO: Check Series0 inits
 
-void initAcc(int sensitivity) {
+void initAcc(int range) {
     setI2CAcc();
-    writeByte(CTRL_REG1_AM, 0xa7);
-    writeByte(CTRL_REG2_AM, sensitivity);
+#ifdef SERIES0
+    writeByte(CTRL_REG1_A, 0xA7);
+    writeByte(CTRL_REG2_A, range);
+#elif SERIES1
+    writeByte(CTRL_REG5_A, 0x38);   // Enable X, Y, Z
+    writeByte(CTRL_REG6_A, 0xC0);   // 1 KHz out data rate, BW set by ODR, 408Hz anti-aliasing
+    uint8_t reg = readByte(CTRL_REG6_A);
+    reg &= ~(0b00011000);
+    reg |= range;
+    writeByte(CTRL_REG6_A, reg);
+#endif
 }
 
-void initGyr(int sensitivity) {
+void initGyr(int scale) {
     setI2CGyr();
-    writeByte(CTRL_REG1_G, 0x0f);
-    writeByte(CTRL_REG4_G, sensitivity);
+#ifdef SERIES0
+    writeByte(CTRL_REG1_G, 0x0F);
+    writeByte(CTRL_REG4_G, scale);
+#elif SERIES1
+    writeByte(CTRL_REG1_G, 0xC0);   // Enable X, Y, Z
+    uint8_t reg = readByte(CTRL_REG1_G);
+    reg &= ~(0b00011000);
+    reg |= scale;
+    writeByte(CTRL_REG1_G, reg);
+#endif
+}
+
+void initMag(int gain) {
+    setI2CMag();
+#ifdef SERIES0
+    writeByte(CTRL_REG5_M, 0xF0);
+    writeByte(CTRL_REG6_M, gain);
+    writeByte(CTRL_REG7_M, 0x00);
+#elif SERIES1
+    writeByte(CTRL_REG3_M, 0x00);   // Continuous mode
+    uint8_t reg = readByte(CTRL_REG2_M);
+    reg &= ~(0b01100000);
+    reg |= gain;
+    writeByte(CTRL_REG2_M, reg);
+
+#endif
 }
 
 void readMag(float res[3], float conversion) {
@@ -118,13 +116,9 @@ void readAcc(float res[3], float conversion) {
     int16_t xHi = ((int16_t)readByte(OUT_X_H_A)) << 8;
     int16_t yHi = ((int16_t)readByte(OUT_Y_H_A)) << 8;
     int16_t zHi = ((int16_t)readByte(OUT_Z_H_A)) << 8;
-    res[0] = (float)((xHi | xLo) * conversion / 1000);
-    res[1] = (float)((yHi | yLo) * conversion / 1000);
-    res[2] = (float)((zHi | zLo) * conversion / 1000); 
-    /* Apply DC offset to set SS values close to 0 */
-    res[0] += 1.1;
-    res[1] += 1.1;
-    res[2] += 1.1;
+    res[0] = (float)((xHi | xLo) * conversion / 1000) * GRAVITY;
+    res[1] = (float)((yHi | yLo) * conversion / 1000) * GRAVITY;
+    res[2] = (float)((zHi | zLo) * conversion / 1000) * GRAVITY; 
 };
 
 void readGyr(float res[3], float conversion) {
@@ -135,23 +129,27 @@ void readGyr(float res[3], float conversion) {
     int16_t xHi = ((int16_t)readByte(OUT_X_H_G)) << 8;
     int16_t yHi = ((int16_t)readByte(OUT_Y_H_G)) << 8;
     int16_t zHi = ((int16_t)readByte(OUT_Z_H_G)) << 8;
-    res[0] = (float)((xHi | xLo) * conversion / 1000);
-    res[1] = (float)((yHi | yLo) * conversion / 1000);
-    res[2] = (float)((zHi | zLo) * conversion / 1000); 
+    res[0] = (float)((xHi | xLo) * conversion);
+    res[1] = (float)((yHi | yLo) * conversion);
+    res[2] = (float)((zHi | zLo) * conversion); 
 };
+
+// TODO: Implement reading temperature sensor
 
 void init_imu() {
     if ((fd = open(FILENAME, O_RDWR)) < 0) {
         perror("Failed to open the i2cbus");
         exit(1);
     }
-    initAcc(ACCELRANGE_16G);
-    initGyr(GYROSCALE_2000DPS);
+    // TODO: Softreset each sensor
+    // TODO: Check WHO_AM_I
+    initAcc(ACCELRANGE_8G);
+    initGyr(GYROSCALE_245DPS);
 }
 
 void get_imu_reading(float acc[3], float gyr[3]) {
-    readAcc(acc, ACCEL_MG_LSB_16G);
-    readGyr(gyr, GYRO_DPS_DIGIT_2000DPS);
+    readAcc(acc, ACCEL_MG_LSB_8G);
+    readGyr(gyr, GYRO_DPS_DIGIT_245DPS);
 }
 
 #ifdef EXECUTABLE

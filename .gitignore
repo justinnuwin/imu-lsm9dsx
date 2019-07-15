@@ -1,0 +1,6 @@
+*.o
+*.pyc
+__pycache__/
+
+imu_test
+imu_server
