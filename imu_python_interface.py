@@ -61,6 +61,9 @@ class ImuInterface:
 
 if __name__ == "__main__":
     imu = ImuInterface()
+    print("Acc Bias", imu.acc_bias)
+    print("Gyr Bias", imu.gyr_bias)
+    print("G Bias", imu.g_bias)
     for i in range(10):
         print(imu.get_measurement())
 

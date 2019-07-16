@@ -144,12 +144,12 @@ void init_imu() {
     // TODO: Softreset each sensor
     // TODO: Check WHO_AM_I
     initAcc(ACCELRANGE_8G);
-    initGyr(GYROSCALE_245DPS);
+    initGyr(GYROSCALE_500DPS);
 }
 
 void get_imu_reading(float acc[3], float gyr[3]) {
     readAcc(acc, ACCEL_MG_LSB_8G);
-    readGyr(gyr, GYRO_DPS_DIGIT_245DPS);
+    readGyr(gyr, GYRO_DPS_DIGIT_500DPS);
 }
 
 #ifdef EXECUTABLE
