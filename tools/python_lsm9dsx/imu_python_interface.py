@@ -1,14 +1,21 @@
-import zmq
 import numpy as np
+import subprocess
+import sys
+import zmq
 
 BIAS_SAMP_COUNT = 200
 G = 9.801
 
 class ImuInterface:
     def __init__(self):
+        # TODO: Check if server already running and connect otherwise start it first
         self.context = zmq.Context()
         self.socket = self.context.socket(zmq.REQ)
-        self.socket.connect("tcp://localhost:5555")
+        try:
+            self.socket.connect("tcp://localhost:5555")
+        except:
+            print("Failed to connect to IMU server via zmq socket", file=sys.stderr)
+            sys.exit(1)
 
         self.acc = np.ndarray((3, 1))
         self.gyr = np.ndarray((3, 1))

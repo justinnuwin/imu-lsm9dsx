@@ -2,9 +2,11 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <sys/ioctl.h>
 #include <linux/i2c-dev.h>
+#include <fcntl.h>
 
-extern int fd;
+static int fd;
 
 void writeByte(uint8_t reg, uint8_t val) {
     if (i2c_smbus_write_byte_data(fd, reg, val)) {
@@ -40,9 +42,22 @@ uint32_t readBlock(uint8_t reg) {
     uint8_t len = 0;
 
     if ((len = i2c_smbus_read_byte_data(fd, reg))) {
-        perror("failed to read byte");
+        perror("Failed to read byte");
         exit(1);
     }
     return res;
 }
 
+int openI2CBus(const char *path) {
+    if ((fd = open(FILENAME, O_RDWR)) < 0) {
+        perror("Failed to open the i2cbus");
+        exit(1);
+    }
+
+
+void setI2cDev(uint8_t address) {
+    if (ioctl(fd, I2C_SLAVE, address) < 0) {
+        perror("Could not set slave address");
+        exit(1);
+    }
+}

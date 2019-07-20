@@ -1,19 +1,12 @@
 #ifdef SERIES0
-#include "imu-lsm9ds0.h"
+#include "lsm9ds0.h"
 #elif SERIES1
-#include "imu-lsm9ds1.h"
+#include "lsm9ds1.h"
 #endif
 
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdint.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <fcntl.h>
-#include <linux/i2c-dev.h>
-#include <sys/ioctl.h>
-#include <unistd.h>
-#include <vector>
 #include <chrono>
 
 #include "i2c.h"
@@ -23,29 +16,16 @@
 #include <string.h>
 #endif
 
-using namespace std;
-
-int fd;
-
 void setI2CMag() {
-    if (ioctl(fd, I2C_SLAVE, MAG_ADDR) < 0) {
-        perror("Could not set slave address");
-        exit(1);
-    }
+    setI2CDev(MAG_ADDR);
 }
 
 void setI2CAcc() {
-    if (ioctl(fd, I2C_SLAVE, ACC_ADDR) < 0) {
-        perror("Could not set slave address");
-        exit(1);
-    }
+    setI2CDev(ACC_ADDR);
 }
 
 void setI2CGyr() {
-    if (ioctl(fd, I2C_SLAVE, GYR_ADDR) < 0) {
-        perror("Could not set slave address");
-        exit(1);
-    }
+    setI2CDev(GYR_ADDR);
 }
 
 // TODO: Check Series0 inits
@@ -137,10 +117,7 @@ void readGyr(float res[3], float conversion) {
 // TODO: Implement reading temperature sensor
 
 void init_imu() {
-    if ((fd = open(FILENAME, O_RDWR)) < 0) {
-        perror("Failed to open the i2cbus");
-        exit(1);
-    }
+    openI2CBus();
     // TODO: Softreset each sensor
     // TODO: Check WHO_AM_I
     initAcc(ACCELRANGE_16G);
