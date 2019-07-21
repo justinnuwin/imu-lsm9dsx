@@ -10,7 +10,7 @@ Justin Nguyen
 
 ## Usage 
 
-To install the library and build the tools run the following:
+To install the library run the following:
 
 ```
 $ make
