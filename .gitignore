@@ -1,6 +1,9 @@
 *.o
+*.a
+*.so
 *.pyc
 __pycache__/
+build/
 
 imu_test
 imu_server
