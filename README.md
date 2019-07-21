@@ -1,8 +1,7 @@
-# Platoon IMU Driver
+# LSM9DS0 and LSM9DS1 IMU Driver
 
 Justin Nguyen
 
-LSM9DS0 or LSM9DS1
  - Requires root to run due to system-level calls or user be in the i2c group
  - Acceleration is in m s^-2
  - Velocity is in m s^-1
