@@ -1,0 +1,8 @@
+README.md
+setup.py
+lsm9dsx/__init__.py
+lsm9dsx/imu_python_interface.py
+lsm9dsx.egg-info/PKG-INFO
+lsm9dsx.egg-info/SOURCES.txt
+lsm9dsx.egg-info/dependency_links.txt
+lsm9dsx.egg-info/top_level.txt

@@ -18,24 +18,14 @@ $ make
 $ sudo make install
 ```
 
-To install the Python interface run the following:
+To install the Python interface run the following after the above commands:
 
-```
-$ make python_interface
-$ sudo make install_python_interface
 ```
 
 ## Removal
 
 ```
 $ sudo make uninstall
-$ make clean
-```
-
-If the python interface is installed the following can be run to remove it:
-
-```
-$ sudo make uninstall_python_interface
 $ make clean
 ```
 
