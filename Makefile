@@ -1,17 +1,11 @@
 OUTPUT_DIR=build
 .PHONY: all install uninstall clean
 
-all: lib imu_test
-
-python_interface: lib imu_server
-	$(MAKE) -C python_lsm9dsx python_interface
-
 lib:
 	$(MAKE) -C src all
 
-imu_test:
-	$(MAKE) -C tools/$@
-	cp tools/$@/$@ $(OUTPUT_DIR)/
+python_interface: lib imu_server
+	$(MAKE) -C python_lsm9dsx python_interface
 
 imu_server:
 	$(MAKE) -C tools/$@

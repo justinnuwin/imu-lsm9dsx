@@ -25,6 +25,18 @@ $ make python_interface
 $ sudo make install_python_interface
 ```
 
+## Example
+
+An example program is provided in tools/imu_test. Instructions below:
+
+```
+$ cd tools/imu_test
+$ make
+$ ./imu_test    
+```
+
+Press Ctrl+c to close the test utility.
+
 ## Removal
 
 ```

@@ -11,6 +11,8 @@ uninstall:
 	pip uninstall lsm9dsx
 
 .PHONY: clean
+
+clean:
 	rm -f README.md
 	rm -rf dist
 	rm -rf *.egg-info
