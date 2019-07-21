@@ -4,17 +4,8 @@
 #include "lsm9ds1.h"
 #endif
 
-#include <stdlib.h>
-#include <stdio.h>
 #include <stdint.h>
-#include <chrono>
-
 #include "i2c.h"
-
-#ifdef ZMQ_ENABLE
-#include <zmq.hpp>
-#include <string.h>
-#endif
 
 void setI2CMag() {
     setI2CDev(MAG_ADDR);
@@ -117,7 +108,7 @@ void readGyr(float res[3], float conversion) {
 // TODO: Implement reading temperature sensor
 
 void init_imu() {
-    openI2CBus();
+    openI2CBus("/dev/i2c-1");
     // TODO: Softreset each sensor
     // TODO: Check WHO_AM_I
     initAcc(ACCELRANGE_16G);
@@ -128,40 +119,3 @@ void get_imu_reading(float acc[3], float gyr[3]) {
     readAcc(acc, ACCEL_MG_LSB_16G);
     readGyr(gyr, GYRO_DPS_DIGIT_500DPS);
 }
-
-#ifdef EXECUTABLE
-int main(void) {
-    #ifdef ZMQ_ENABLE
-    printf("ZMQ Enabled!\n");
-    zmq::context_t context (1);
-    zmq::socket_t socket (context, ZMQ_REP);
-    socket.bind("tcp://*:5555");
-    #endif
-
-    init_imu();
-
-    auto start_time = std::chrono::high_resolution_clock::now();
-    while (true) {
-        float acc[3] = {0};
-        float gyr[3] = {0};
-        get_imu_reading(acc, gyr);
-        std::chrono::duration<double> time_elapsed = std::chrono::high_resolution_clock::now() - start_time;
-        char buffer[80] = {0};
-        #ifdef ZMQ_ENABLE
-        sprintf(buffer, "%f %f %f %f %f %f %f",
-			acc[0], acc[1], acc[2], gyr[0], gyr[1], gyr[2], time_elapsed.count());
-        zmq::message_t request;
-        socket.recv(&request);
-        zmq::message_t measurements(strlen(buffer));
-        memcpy(measurements.data(), buffer, strlen(buffer));
-        socket.send(measurements);
-        #else
-        sprintf(buffer, "Acc: %6.2f %6.2f %6.2f | Gyr: %6.2f %6.2f %6.2f | Time: %fs",
-			acc[0], acc[1], acc[2], gyr[0], gyr[1], gyr[2], time_elapsed.count());
-        printf("%s\n", buffer);
-        #endif
-        start_time = std::chrono::high_resolution_clock::now();
-    }
-    return 0;
-}
-#endif

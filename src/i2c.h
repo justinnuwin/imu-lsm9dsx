@@ -10,6 +10,6 @@ uint8_t readByte(uint8_t reg);
 uint16_t readWord(uint8_t reg);
 uint32_t readBlock(uint8_t reg);
 int openI2CBus(const char *path);
-void setI2cDev(uint8_t address);
+void setI2CDev(uint8_t address);
 
 #endif

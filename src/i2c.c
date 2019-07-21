@@ -49,13 +49,14 @@ uint32_t readBlock(uint8_t reg) {
 }
 
 int openI2CBus(const char *path) {
-    if ((fd = open(FILENAME, O_RDWR)) < 0) {
+    if ((fd = open(path, O_RDWR)) < 0) {
         perror("Failed to open the i2cbus");
         exit(1);
     }
+    return fd;
+}
 
-
-void setI2cDev(uint8_t address) {
+void setI2CDev(uint8_t address) {
     if (ioctl(fd, I2C_SLAVE, address) < 0) {
         perror("Could not set slave address");
         exit(1);

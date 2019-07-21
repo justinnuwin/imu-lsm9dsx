@@ -14,7 +14,7 @@ class ImuInterface:
         try:
             self.socket.connect("tcp://localhost:5555")
         except:
-            print("Failed to connect to IMU server via zmq socket", file=sys.stderr)
+            # print("Failed to connect to IMU server via zmq socket", file=sys.stderr)
             sys.exit(1)
 
         self.acc = np.ndarray((3, 1))
@@ -31,7 +31,7 @@ class ImuInterface:
         self.socket.send(b"0")
 
     def receive_measurement(self):
-        message = self.socket.recv()
+        message = self.socket.recv().decode("utf-8")
         values = message.split(" ")
         values = [float(v) for v in values]
         self.acc = np.array(values[0:3]).reshape((3, 1))
