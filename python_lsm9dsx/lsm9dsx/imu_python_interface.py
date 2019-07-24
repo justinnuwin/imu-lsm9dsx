@@ -3,6 +3,9 @@ import subprocess
 import sys
 import zmq
 
+
+import time
+
 BIAS_SAMP_COUNT = 200
 G = 9.801
 
@@ -72,5 +75,8 @@ if __name__ == "__main__":
     print("Gyr Bias", imu.gyr_bias)
     print("G Bias", imu.g_bias)
     for i in range(10):
+        print(imu.get_measurement())
+    for i in range(5):
+        time.sleep(1)
         print(imu.get_measurement())
 
